@@ -16,10 +16,10 @@ from .exceptions import (
     APIConnectionError,
     APITimeoutError,
     APIRateLimitError,
-    APIResponseError,
+    APIBadResponseError,
     JSONParseError,
-    ConnectionFailureError,
-    DuplicateFrameError,
+    DatabaseConnectionFailureError,
+    DatabaseDuplicateEntryError,
     DatabaseWriteError,
     ConfigurationError
 )
@@ -171,14 +171,14 @@ Examples:
             print(f"Frame Extraction Error: {e}", file=sys.stderr)
         sys.exit(2)
 
-    except (APIConnectionError, APITimeoutError, APIRateLimitError, APIResponseError, JSONParseError) as e:
+    except (APIConnectionError, APITimeoutError, APIRateLimitError, APIBadResponseError, JSONParseError) as e:
         if args.output_json:
             print(json.dumps({"success": False, "error": str(e)}))
         else:
             print(f"API Error: {e}", file=sys.stderr)
         sys.exit(3)
 
-    except (ConnectionFailureError, DuplicateFrameError, DatabaseWriteError) as e:
+    except (DatabaseConnectionFailureError, DatabaseDuplicateEntryError, DatabaseWriteError) as e:
         if args.output_json:
             print(json.dumps({"success": False, "error": str(e)}))
         else:

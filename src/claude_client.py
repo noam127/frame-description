@@ -8,7 +8,7 @@ from .exceptions import (
     APIConnectionError,
     APITimeoutError,
     APIRateLimitError,
-    APIResponseError,
+    APIBadResponseError,
     JSONParseError
 )
 
@@ -51,7 +51,7 @@ def describe_frame(frame_bytes: bytes, api_key: str, model: str, max_tokens: int
         APIConnectionError: If connection to the API fails.
         APITimeoutError: If the API request times out.
         APIRateLimitError: If rate limit is exceeded.
-        APIResponseError: If the API returns an unexpected response.
+        APIBadResponseError: If the API returns an unexpected response.
         JSONParseError: If JSON parsing fails.
     """
     try:
@@ -91,7 +91,7 @@ def describe_frame(frame_bytes: bytes, api_key: str, model: str, max_tokens: int
 
         # Extract text content from response
         if not response.content or len(response.content) == 0:
-            raise APIResponseError("Empty response from Claude API")
+            raise APIBadResponseError("Empty response from Claude API")
 
         text_content = None
         for block in response.content:
@@ -100,7 +100,7 @@ def describe_frame(frame_bytes: bytes, api_key: str, model: str, max_tokens: int
                 break
 
         if text_content is None:
-            raise APIResponseError("No text content in Claude API response")
+            raise APIBadResponseError("No text content in Claude API response")
 
         # Parse JSON from response
         try:
@@ -156,6 +156,6 @@ def describe_frame(frame_bytes: bytes, api_key: str, model: str, max_tokens: int
             "Check your internet connection and API key."
         )
     except APIError as e:
-        raise APIResponseError(
+        raise APIBadResponseError(
             f"Anthropic API error: {str(e)}"
         )

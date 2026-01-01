@@ -1,75 +1,71 @@
-"""Custom exceptions for the video frame description tool."""
-
-
 class FrameDescriptionError(Exception):
     """Base exception for all frame description errors."""
     pass
 
 
-# Video processing errors
-class VideoNotFoundError(FrameDescriptionError):
-    """Raised when the video file is not found."""
+# Video Processing Errors
+class VideoProcessingError(FrameDescriptionError):
     pass
 
 
-class InvalidVideoFormatError(FrameDescriptionError):
-    """Raised when the video format is invalid or cannot be read."""
+class VideoNotFoundError(VideoProcessingError):
     pass
 
 
-class TimestampOutOfBoundsError(FrameDescriptionError):
-    """Raised when the timestamp exceeds the video duration."""
+class InvalidVideoFormatError(VideoProcessingError):
     pass
 
 
-class FrameExtractionError(FrameDescriptionError):
-    """Raised when frame extraction fails."""
+class TimestampOutOfBoundsError(VideoProcessingError):
     pass
 
 
-# API errors
-class APIConnectionError(FrameDescriptionError):
-    """Raised when connection to the API fails."""
+class FrameExtractionError(VideoProcessingError):
     pass
 
 
-class APITimeoutError(FrameDescriptionError):
-    """Raised when the API request times out."""
+# Anthropic API errors
+class AnthropicAPIError(FrameDescriptionError):
     pass
 
 
-class APIRateLimitError(FrameDescriptionError):
-    """Raised when API rate limit is exceeded."""
+class APIConnectionError(AnthropicAPIError):
     pass
 
 
-class APIResponseError(FrameDescriptionError):
-    """Raised when the API returns an unexpected response."""
+class APITimeoutError(AnthropicAPIError):
     pass
 
 
-class JSONParseError(FrameDescriptionError):
-    """Raised when JSON parsing fails."""
+class APIRateLimitError(AnthropicAPIError):
+    pass
+
+
+class APIBadResponseError(AnthropicAPIError):
+    pass
+
+
+class JSONParseError(AnthropicAPIError):
     pass
 
 
 # Database errors
-class ConnectionFailureError(FrameDescriptionError):
-    """Raised when database connection fails."""
+class DatabaseError(FrameDescriptionError):
     pass
 
 
-class DuplicateFrameError(FrameDescriptionError):
-    """Raised when trying to insert a duplicate frame description."""
+class DatabaseConnectionFailureError(DatabaseError):
     pass
 
 
-class DatabaseWriteError(FrameDescriptionError):
-    """Raised when database write operation fails."""
+class DatabaseDuplicateEntryError(DatabaseError):
+    pass
+
+
+class DatabaseWriteError(DatabaseError):
     pass
 
 
 # Configuration errors
 class ConfigurationError(FrameDescriptionError):
-    """Raised when configuration is invalid or missing."""
     pass

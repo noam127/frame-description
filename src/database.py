@@ -4,8 +4,8 @@ from datetime import datetime
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from pymongo.errors import ConnectionFailure, DuplicateKeyError, PyMongoError
 from .exceptions import (
-    ConnectionFailureError,
-    DuplicateFrameError,
+    DatabaseConnectionFailureError,
+    DatabaseDuplicateEntryError,
     DatabaseWriteError
 )
 
@@ -22,7 +22,7 @@ class FrameDescriptionRepository:
             collection_name: Name of the collection.
 
         Raises:
-            ConnectionFailureError: If connection to MongoDB fails.
+            DatabaseConnectionFailureError: If connection to MongoDB fails.
         """
         try:
             self.client = MongoClient(mongodb_uri, serverSelectionTimeoutMS=5000)
@@ -36,12 +36,12 @@ class FrameDescriptionRepository:
             self._create_indexes()
 
         except ConnectionFailure as e:
-            raise ConnectionFailureError(
+            raise DatabaseConnectionFailureError(
                 f"Cannot connect to MongoDB at {mongodb_uri}: {str(e)}. "
                 "Ensure MongoDB is running."
             )
         except PyMongoError as e:
-            raise ConnectionFailureError(
+            raise DatabaseConnectionFailureError(
                 f"MongoDB error during initialization: {str(e)}"
             )
 
@@ -76,7 +76,7 @@ class FrameDescriptionRepository:
             String representation of the inserted document's ObjectId.
 
         Raises:
-            DuplicateFrameError: If a description for this video+timestamp already exists.
+            DatabaseDuplicateEntryError: If a description for this video+timestamp already exists.
             DatabaseWriteError: If the insert operation fails.
         """
         try:
@@ -89,7 +89,7 @@ class FrameDescriptionRepository:
             return str(result.inserted_id)
 
         except DuplicateKeyError:
-            raise DuplicateFrameError(
+            raise DatabaseDuplicateEntryError(
                 f"Frame description already exists for video '{document.get('video_path')}' "
                 f"at timestamp {document.get('timestamp')}s"
             )
