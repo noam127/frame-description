@@ -82,8 +82,6 @@ def execute_pipline(args):
         config["max_tokens"]
     )
 
-    description = api_result["description"]
-
     if args.verbose and not args.output_json:
         print(f"Description received (tokens used: {api_result['tokens_used']})")
 
@@ -100,7 +98,7 @@ def execute_pipline(args):
         document = {
             "video_path": video_path,
             "timestamp": timestamp,
-            "description": description,
+            "description": api_result["description"],
             "frame_metadata": frame_metadata,
             "api_metadata": {
                 "model": api_result["model"],
@@ -110,14 +108,15 @@ def execute_pipline(args):
 
         document_id = repo.insert_description(document)
 
-    return document_id, description, frame_metadata, api_result
+    return document_id, frame_metadata, api_result
 
 
 def main():
     args = parse_cli_args()
 
     try:
-        document_id, description, frame_metadata, api_result = execute_pipline(args)
+        document_id, frame_metadata, api_result = execute_pipline(args)
+        description = api_result["description"]
 
         if args.output_json:
             result = {

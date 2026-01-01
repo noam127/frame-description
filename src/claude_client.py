@@ -1,10 +1,8 @@
-"""Anthropic Claude API integration for frame analysis."""
-
 import base64
 import json
-import time
-from anthropic import Anthropic, APIError, APIConnectionError as AnthropicConnectionError, APITimeoutError as AnthropicTimeoutError, RateLimitError
+import anthropic
 from .exceptions import (
+    AnthropicAPIError,
     APIConnectionError,
     APITimeoutError,
     APIRateLimitError,
@@ -32,37 +30,20 @@ Return as valid JSON:
 }"""
 
 
-def describe_frame(frame_bytes: bytes, api_key: str, model: str, max_tokens: int) -> dict:
+def describe_frame(frame_jpeg_bytes: bytes, api_key: str, model: str, max_tokens: int) -> dict:
     """Get a description of a video frame using Claude's vision API.
 
-    Args:
-        frame_bytes: JPEG-encoded frame as bytes.
-        api_key: Anthropic API key.
-        model: Claude model to use.
-        max_tokens: Maximum tokens for the response.
-
-    Returns:
-        Dictionary with:
+    Returns in a dictionary:
         - description: Parsed JSON description from Claude
         - tokens_used: Number of tokens used
         - model: Model that was used
-
-    Raises:
-        APIConnectionError: If connection to the API fails.
-        APITimeoutError: If the API request times out.
-        APIRateLimitError: If rate limit is exceeded.
-        APIBadResponseError: If the API returns an unexpected response.
-        JSONParseError: If JSON parsing fails.
     """
     try:
         # Encode frame to base64
-        base64_image = base64.standard_b64encode(frame_bytes).decode("utf-8")
+        base64_image = base64.standard_b64encode(frame_jpeg_bytes).decode("utf-8")
 
         # Create Anthropic client
-        client = Anthropic(api_key=api_key)
-
-        # Record start time for performance tracking
-        start_time = time.time()
+        client = anthropic.Anthropic(api_key=api_key)
 
         # Make API request
         response = client.messages.create(
@@ -102,21 +83,21 @@ def describe_frame(frame_bytes: bytes, api_key: str, model: str, max_tokens: int
         if text_content is None:
             raise APIBadResponseError("No text content in Claude API response")
 
+        # Try to find JSON in the response (Claude might include extra text)
+        # Look for JSON object boundaries
+        start_idx = text_content.find('{')
+        end_idx = text_content.rfind('}')
+
+        if start_idx == -1 or end_idx == -1:
+            raise JSONParseError(
+                f"No JSON object found in response: {text_content[:200]}"
+            )
+
+        json_str = text_content[start_idx:end_idx + 1]
+        
         # Parse JSON from response
         try:
-            # Try to find JSON in the response (Claude might include extra text)
-            # Look for JSON object boundaries
-            start_idx = text_content.find('{')
-            end_idx = text_content.rfind('}')
-
-            if start_idx == -1 or end_idx == -1:
-                raise JSONParseError(
-                    f"No JSON object found in response: {text_content[:200]}"
-                )
-
-            json_str = text_content[start_idx:end_idx + 1]
             description = json.loads(json_str)
-
         except json.JSONDecodeError as e:
             raise JSONParseError(
                 f"Failed to parse JSON from Claude response: {str(e)}\n"
@@ -142,20 +123,18 @@ def describe_frame(frame_bytes: bytes, api_key: str, model: str, max_tokens: int
             "model": model
         }
 
-    except RateLimitError as e:
+    except anthropic.RateLimitError as e:
         raise APIRateLimitError(
             f"API rate limit exceeded: {str(e)}. Please wait and try again."
         )
-    except AnthropicTimeoutError as e:
+    except anthropic.APITimeoutError as e:
         raise APITimeoutError(
             f"API request timed out: {str(e)}. Check your internet connection."
         )
-    except AnthropicConnectionError as e:
+    except anthropic.APIConnectionError as e:
         raise APIConnectionError(
             f"Failed to connect to Anthropic API: {str(e)}. "
             "Check your internet connection and API key."
         )
-    except APIError as e:
-        raise APIBadResponseError(
-            f"Anthropic API error: {str(e)}"
-        )
+    except anthropic.APIError as e:
+        raise AnthropicAPIError(str(e))
