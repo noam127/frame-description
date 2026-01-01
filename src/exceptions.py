@@ -1,11 +1,14 @@
 class FrameDescriptionError(Exception):
     """Base exception for all frame description errors."""
-    pass
+
+    exit_code = None
+    error_name = None
 
 
 # Video Processing Errors
 class VideoProcessingError(FrameDescriptionError):
-    pass
+    exit_code = 2
+    error_name = "Video Processing Error"
 
 
 class VideoNotFoundError(VideoProcessingError):
@@ -26,7 +29,8 @@ class FrameExtractionError(VideoProcessingError):
 
 # Anthropic API errors
 class AnthropicAPIError(FrameDescriptionError):
-    pass
+    exit_code = 3
+    error_name = "Anthropic API Error"
 
 
 class APIConnectionError(AnthropicAPIError):
@@ -51,7 +55,8 @@ class JSONParseError(AnthropicAPIError):
 
 # Database errors
 class DatabaseError(FrameDescriptionError):
-    pass
+    exit_code = 4
+    error_name = "Database Error"
 
 
 class DatabaseConnectionFailureError(DatabaseError):
@@ -68,4 +73,5 @@ class DatabaseWriteError(DatabaseError):
 
 # Configuration errors
 class ConfigurationError(FrameDescriptionError):
-    pass
+    exit_code = 1
+    error_name = "Configuration Error"
