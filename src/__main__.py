@@ -58,7 +58,14 @@ def execute_pipline(args):
         print("Loading configuration...")
     config = load_config()
 
-    # Extract frame
+    # First try connecting to MongoDB to not accidentally waste Anthropic API credits
+    repo = FrameDescriptionRepository(
+        config["mongodb_uri"],
+        config["mongodb_database"],
+        config["mongodb_collection"]
+    )
+
+    # Extract frame image
     if not args.output_json:
         print(f"Processing video: {video_path}")
         print(f"Extracting frame at timestamp: {timestamp}s")
@@ -85,28 +92,25 @@ def execute_pipline(args):
     if args.verbose and not args.output_json:
         print(f"Description received (tokens used: {api_result['tokens_used']})")
 
-    # Store in MongoDB
     if not args.output_json:
         print("Storing results in MongoDB...")
 
-    with FrameDescriptionRepository(
-        config["mongodb_uri"],
-        config["mongodb_database"],
-        config["mongodb_collection"]
-    ) as repo:
-        # Build complete document
-        document = {
-            "video_path": video_path,
-            "timestamp": timestamp,
-            "description": api_result["description"],
-            "frame_metadata": frame_metadata,
-            "api_metadata": {
-                "model": api_result["model"],
-                "tokens_used": api_result["tokens_used"]
-            }
+    # Store in MongoDB
+    document = {
+        "video_path": video_path,
+        "timestamp": timestamp,
+        "description": api_result["description"],
+        "frame_metadata": frame_metadata,
+        "api_metadata": {
+            "model": api_result["model"],
+            "tokens_used": api_result["tokens_used"]
         }
+    }
 
-        document_id = repo.insert_description(document)
+    document_id = repo.insert_description(document)
+
+    # Close MongoDB connection
+    repo.close()
 
     return document_id, frame_metadata, api_result
 

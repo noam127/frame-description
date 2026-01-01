@@ -1,5 +1,3 @@
-"""Configuration management for the video frame description tool."""
-
 import os
 from dotenv import load_dotenv
 from .exceptions import ConfigurationError
